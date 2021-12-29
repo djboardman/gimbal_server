@@ -1,0 +1,5 @@
+namespace example where
+
+entity persists Agent
+
+name:: Agent -> elsewhere.Resource

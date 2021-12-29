@@ -1,0 +1,7 @@
+
+namespace example where
+
+entity persists Resource
+
+short_desc:: Resource -> String
+value:: Resource -> Int

@@ -1,0 +1,34 @@
+file = _{ SOI ~ (code)? ~ EOI }
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+code = { ((import)* ~ (app_def))? ~ ((use_namespace)* ~ "namespace" ~ namespace ~ "where" ~ (entity_type | function_type )*)? }
+
+use_namespace = { "use" ~ namespace }
+
+namespace = @{ (ASCII_ALPHA_LOWER | "_" )+ }
+
+app_def = { "app" ~ app_name }
+
+app_name = @{ (ASCII_ALPHA_LOWER | "_" )+ }
+
+import = { "import"  ~ import_path ~ ("as" ~ namespace)?}
+
+import_list = { (type_name | "(" ~ type_name ~ ("," ~ type_name)* ~ ")") }
+
+import_path = @{ "\"" ~ (ASCII_ALPHANUMERIC | ":" | "_" | "." | "/" | WHITESPACE)+ ~ "\""}
+
+entity_type = { "entity" ~ entity_duration ~ type_name }
+
+type_name = @{ ASCII_ALPHA_UPPER ~ (ASCII_ALPHA_LOWER)* }
+
+entity_duration = { "persists" | "transports" }
+
+native_type = { "Int" | "String" | "Float" | "Bool" }
+
+function_type = { function_name ~ "::" ~ dom ~ "->" ~ codom } 
+
+function_name = @{ (ASCII_ALPHA_LOWER | "_" )+ }
+
+dom = { (namespace ~ ".")? ~ type_name }
+
+codom = { (namespace ~ ".")? ~ type_name }

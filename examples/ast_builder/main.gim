@@ -1,0 +1,4 @@
+import "./agent.gim"
+import "./resource.gim"
+
+app my_app
