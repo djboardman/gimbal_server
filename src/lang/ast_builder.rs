@@ -8,6 +8,8 @@ use std::collections::HashMap;
 
 use crate::lang::cst;
 use crate::lang::ast;
+use crate::lang::internal;
+
 
 fn code_from_file(file_path_str: &str) -> io::Result<String> {
   fs::read_to_string(file_path_str)
@@ -21,10 +23,12 @@ pub fn build_from_main_file(main_path_str: &str) -> Result<ast::Application, Box
   Ok(build(&main_code)?)
 }
 
-fn build(main_code: &str) -> Result<ast::Application, Box<dyn Error>> {
+pub fn build(main_code: &str) -> Result<ast::Application, Box<dyn Error>> {
   let main = cst::parse(&main_code);
+  let app_name = main.app_name().expect("no app name found");
   let import_path_strs = main.import_paths();
-  let import_csts: Vec<cst::FileRoot> = import_path_strs.iter().map(|p| cst::parse(&code_from_file(&p).expect("couldn't read file"))).collect();
+  let mut import_csts: Vec<cst::FileRoot> = import_path_strs.iter().map(|p| cst::parse(&code_from_file(&p).expect("couldn't read file"))).collect();
+  import_csts.push(main);
   let mut atypes: HashMap<ast::QualifiedName, ast::AType> = HashMap::new();
   import_csts.iter().for_each(|c| {
     c.entity_types().iter().for_each(|e| {
@@ -42,6 +46,12 @@ fn build(main_code: &str) -> Result<ast::Application, Box<dyn Error>> {
     });
 
   });
+
+  let leaf_types = internal::LeafType::all();
+  atypes.extend(leaf_types.into_iter().map(|l| {
+    let qn = ast::QualifiedName::new(internal::INTERNAL_NAMESPACE, &l.name(), None);
+    (qn, ast::AType::LeafType(l))
+  }).collect::<HashMap<ast::QualifiedName, ast::AType>>());
 
   let mut domains: HashMap<ast::QualifiedName, Vec<ast::QualifiedName>> = HashMap::new();
   atypes.values().for_each(|e| {
@@ -63,18 +73,26 @@ fn build(main_code: &str) -> Result<ast::Application, Box<dyn Error>> {
       }
     , _ => {}
     }
+
   });
   
   // = import_csts.iter().map(|c| c.entity_types().iter().map(|e| (c.namespace(), ast::AType::EntityType(ast::EntityType::new(&c.namespace(), &e.name()))))).collect();
-  Ok(ast::Application::new(&main.app_name().expect("no application name found"), atypes, domains))
+  Ok(ast::Application::new(&app_name, atypes, domains))
 }
 
 fn qn_default(default_namespace: &str, qualified_pair: (Option<String>, String)) -> ast::QualifiedName {
-
-  ast::QualifiedName::new(&qualified_pair.0.unwrap_or(default_namespace.to_string()), &qualified_pair.1, None)
+  let namespace = match qualified_pair.0 {
+    None => {
+      if internal::LeafType::is_leaf_type(&qualified_pair.1) {
+        internal::INTERNAL_NAMESPACE.to_string()
+      } else {
+        default_namespace.to_string()
+      }
+    }
+  , Some(n) => n
+  };
+  ast::QualifiedName::new(&namespace, &qualified_pair.1, None)
 }
-
-
 
 #[cfg(test)]
 mod tests {

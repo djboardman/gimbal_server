@@ -1,0 +1,8 @@
+
+app postgres_app
+
+namespace pg where
+entity persists Person
+
+first_name:: Person -> String
+last_name:: Person -> String

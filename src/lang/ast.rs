@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
-const LEAF_TYPE_STRINGS: &'static [&'static str] = &["String", "Int", "Float", "Bool"];
-const INTERNAL_NAMESPACE: &str = "_internal_";
+use crate::lang::internal;
+
 
 #[derive(Debug)]
 pub enum AstError {
@@ -29,7 +29,6 @@ impl fmt::Display for AstError {
   }
 }
 
-
 #[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Clone)]
 pub struct QualifiedName {
   namespace: String
@@ -50,6 +49,10 @@ impl QualifiedName {
     self.namespace.clone()
   }
 
+  // this only applies to non-function names
+  pub fn table_name(&self) -> String {
+    format!("{}_{}", &self.namespace, &self.name)
+  }
 }
 
 #[derive(Debug)]
@@ -74,6 +77,16 @@ impl Application {
   pub fn get_entity_functions(&self, qualified_name: &QualifiedName) -> Option<&Vec<QualifiedName>> {
     self.entity_functions.get(qualified_name)
   }
+
+  pub fn entity_unique_names(&self) -> Vec<String> {
+    self.entity_functions.keys().map(|k| k.table_name()).collect()
+  }
+
+  pub fn entity_functions(&self) -> &HashMap<QualifiedName, Vec<QualifiedName>> {
+    &self.entity_functions
+  }
+
+
 }
 
 
@@ -94,6 +107,10 @@ impl EntityType {
 
   pub fn name(&self) -> String {
     self.qualified_name.name.clone()
+  }
+
+  pub fn unique_name(&self) -> String {
+    self.qualified_name().namespace() + "_" + &self.qualified_name().name()
   }
 }
 
@@ -134,20 +151,11 @@ impl FunctionType {
 }
 
 
-
-#[derive(Debug)]
-enum LeafType {
-  String
-, Int
-, Float
-, Bool
-}
-
 #[derive(Debug)]
 pub enum AType {
   FunctionType(FunctionType)
 , EntityType(EntityType)
-, LeafType(LeafType)
+, LeafType(internal::LeafType)
 }
 
 impl AType {

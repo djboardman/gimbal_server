@@ -1,0 +1,8 @@
+
+postgres_app:
+  dev:
+    postgres:
+      host: localhost
+      database: postgres
+      user: postgres
+      password: password   
