@@ -1,8 +1,16 @@
 
 app postgres_app
 
-namespace pg where
-entity persists Person
+namespace test_ where
+struct persistent Person
 
 first_name:: Person -> String
 last_name:: Person -> String
+
+create:: CreatePerson -> Person
+changeName:: ChangeName -> Person -> CommandResult(Persistent, CommandError)
+
+struct command ChangeName
+first_name:: ChangeName -> String
+last_name:: ChangeName -> String
+identify:: ChangeName -> Person

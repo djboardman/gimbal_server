@@ -1,3 +1,3 @@
 pub mod integration;
-mod meta;
+pub mod meta;
 mod drivers;

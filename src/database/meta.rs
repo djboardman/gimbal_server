@@ -5,18 +5,38 @@ use crate::lang::internal;
 #[derive(Debug)]
 pub enum DatabaseChange {
   MockDb(DatabaseConfig)
-, RealDb(Vec<String>)
+, SqlDb(Vec<String>)
+}
+
+impl DatabaseChange {
+  pub fn to_string(&self) -> String {
+    match self {
+      DatabaseChange::MockDb(_) => "I'm just a mock".to_string()
+    , DatabaseChange::SqlDb(s) => s.join("\n")
+    }
+  }
+
+  pub fn commands(&self) -> &Vec<String> {
+    match self {
+      DatabaseChange::SqlDb(s) => s
+    , _ => unreachable!()
+    }
+  }
 }
 
 #[derive(Debug)]
 pub enum DatabaseConfig {
   MockDb(MockDbConfig)
+, Postgres(String)
 }
+
+
 
 #[derive(Debug)]
 pub struct MockDbConfig {
   pub tables: Vec<Table>
 }
+
 
 #[derive(Debug)]
 pub struct Database {

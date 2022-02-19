@@ -4,6 +4,7 @@ use std::error;
 
 use crate::lang::{ast, internal};
 use crate::database::drivers::mock;
+use crate::database::drivers::postgres;
 use crate::database::meta;
 
 
@@ -78,7 +79,10 @@ pub fn diagnose_db_diffs(ast: &ast::Application, db_config: &meta::DatabaseConfi
 
 fn diagnose_diff(ast: &ast::Application, db_config: &meta::DatabaseConfig, entity_qname: &ast::QualifiedName) -> DbDiff {
   let entity_table = entity_to_table(ast, entity_qname);
-  let database_table = mock::db_table_for_ast_table(db_config, &entity_table);
+  let database_table = match db_config {
+    meta::DatabaseConfig::MockDb(_) => mock::db_table_for_ast_table(db_config, &entity_table)
+  , meta::DatabaseConfig::Postgres(_) => postgres::db_table_for_ast_table(db_config, &entity_table)
+  };
   let diff_diagnosis = diagnose_table(&entity_table, database_table);
   let ast_table = AstTable{ entity_name: entity_qname.clone(), table: entity_table };
   DbDiff{ entity_table: ast_table, diff_diagnosis }
@@ -108,12 +112,18 @@ fn diagnose_column(entity_column: &meta::Column, database_columns: &Vec<meta::Co
   }
 }
 
-fn diffs_to_script(db_diffs: &Vec<DbDiff>, db_config: &meta::DatabaseConfig) -> meta::DatabaseChange {
-  mock::diffs_to_changes(db_diffs, db_config)
+pub fn diffs_to_script(db_diffs: &Vec<DbDiff>, db_config: &meta::DatabaseConfig) -> meta::DatabaseChange {
+  match db_config {
+    meta::DatabaseConfig::MockDb(_) => mock::diffs_to_changes(db_diffs, db_config)
+  , meta::DatabaseConfig::Postgres(_) => postgres::diffs_to_changes(db_diffs, db_config)
+  }
 }
 
-fn tables(db: &meta::DatabaseConfig) -> Vec<meta::Table> {
-  mock::tables()
+pub fn migrate_db(db_changes: &meta::DatabaseChange, db_config: &meta::DatabaseConfig) -> Result<(), String> {
+  match db_config {
+    meta::DatabaseConfig::MockDb(_) => mock::execute_changes(db_changes, db_config)
+  , meta::DatabaseConfig::Postgres(_) => postgres::execute_changes(db_changes, db_config)
+  } 
 }
 
 #[cfg(test)]
@@ -159,7 +169,6 @@ name:: Agent -> String"#;
     let mock_db_config = meta::DatabaseConfig::MockDb(meta::MockDbConfig{ tables: vec!(mock_table) });
     let db_diff = diagnose_db_diffs(&ast, &mock_db_config);
     assert_eq!(ast_db.tables()[0].name(),  "db_Agent");
-    //println!("{:?}", db_diff);
     assert!(matches!(db_diff[0].diff_diagnosis[0], DiffDiagnosis::NoDiff));
   }
 
@@ -207,5 +216,23 @@ name:: Agent -> String"#;
     let db_change = diffs_to_script(&db_diff, &mock_db_config);
     assert_eq!(ast_db.tables()[0].name(),  "db_Agent");
     assert!(matches!(&db_diff[0].diff_diagnosis[0], DiffDiagnosis::ColumnTypeMismatch(_entity_column_name, internal::LeafType::String, internal::LeafType::Int)));
+  }
+
+  #[test]
+  fn test_execute_changes() {
+    let code = r#"
+app database
+
+namespace db where
+
+entity persists Agent
+
+name:: Agent -> String"#;
+    let ast = ast_builder::build(code).unwrap();
+    let ast_db = ast_to_db(&ast);
+    let mock_db_config = meta::DatabaseConfig::MockDb(meta::MockDbConfig{ tables: Vec::new() });
+    let db_diff = diagnose_db_diffs(&ast, &mock_db_config);
+    let db_change = diffs_to_script(&db_diff, &mock_db_config);
+    assert!(migrate_db(&db_change, &mock_db_config).is_ok());
   }
 }
