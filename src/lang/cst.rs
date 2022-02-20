@@ -62,7 +62,7 @@ fn cst_node(pair: Pair<Rule>) -> CodeNode {
   match pair.as_rule() {
     Rule::import => CodeNode::Import(import_from_pairs(pair.into_inner()).expect("cst/pst mismatch on import"))
   , Rule::app_def => CodeNode::AppDef(app_def_from_pairs(pair.into_inner()).expect("cst/pst mismatch on app def"))
-  , Rule::entity_type => CodeNode::EntityType(entity_type_from_pairs(pair.into_inner()).expect("cst/pst mismatch on entity"))
+  , Rule::struct_type => CodeNode::EntityType(entity_type_from_pairs(pair.into_inner()).expect("cst/pst mismatch on entity"))
   , Rule::function_type => CodeNode::FunctionType(function_type_from_pairs(pair.into_inner()).expect("cst/pst mismatch on function"))
   , Rule::namespace => CodeNode::Namespace(Namespace{ name: pair.as_str().to_string()})
   , Rule::use_namespace => CodeNode::UsedNamespace(Namespace {name: pair.into_inner().as_str().to_string()})
@@ -227,7 +227,7 @@ mod tests {
   use std
   namespace mine where
   
-  entity persists Person
+  struct persists Person
   name:: Person -> String"#;
     let cst = parse(valid_code);
     assert_eq!(cst.namespace.name, "mine");

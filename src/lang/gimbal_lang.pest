@@ -1,7 +1,7 @@
 file = _{ SOI ~ (code)? ~ EOI }
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 
-code = { ((import)* ~ (app_def))? ~ ((use_namespace)* ~ "namespace" ~ namespace ~ "where" ~ (entity_type | function_type )*)? }
+code = { ((import)* ~ (app_def))? ~ ((use_namespace)* ~ "namespace" ~ namespace ~ "where" ~ (struct_type | function_type )*)? }
 
 use_namespace = { "use" ~ namespace }
 
@@ -17,7 +17,7 @@ import_list = { (type_name | "(" ~ type_name ~ ("," ~ type_name)* ~ ")") }
 
 import_path = @{ "\"" ~ (ASCII_ALPHANUMERIC | ":" | "_" | "." | "/" | WHITESPACE)+ ~ "\""}
 
-entity_type = { "entity" ~ entity_duration ~ type_name }
+struct_type = { "struct" ~ entity_duration ~ type_name }
 
 type_name = @{ ASCII_ALPHA_UPPER ~ (ASCII_ALPHA_LOWER)* }
 

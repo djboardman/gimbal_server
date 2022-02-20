@@ -138,7 +138,7 @@ app database
 
 namespace db where
 
-entity persists Agent
+struct persists Agent
 
 name:: Agent -> String"#;
 
@@ -158,7 +158,7 @@ app database
 
 namespace db where
 
-entity persists Agent
+struct persists Agent
 
 name:: Agent -> String"#;
 
@@ -179,7 +179,7 @@ app database
 
 namespace db where
 
-entity persists Agent
+struct persists Agent
 
 name:: Agent -> String"#;
 
@@ -202,7 +202,7 @@ app database
 
 namespace db where
 
-entity persists Agent
+struct persists Agent
 
 name:: Agent -> String"#;
 
@@ -225,7 +225,7 @@ app database
 
 namespace db where
 
-entity persists Agent
+struct persists Agent
 
 name:: Agent -> String"#;
     let ast = ast_builder::build(code).unwrap();

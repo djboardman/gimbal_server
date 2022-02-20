@@ -1,7 +1,7 @@
 
 namespace example where
 
-entity persists Resource
+struct persists Resource
 
 short_desc:: Resource -> String
 value:: Resource -> Int

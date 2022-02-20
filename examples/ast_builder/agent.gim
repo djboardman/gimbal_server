@@ -1,5 +1,5 @@
 namespace example where
 
-entity persists Agent
+struct persists Agent
 
 name:: Agent -> elsewhere.Resource
